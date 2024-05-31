@@ -124,6 +124,12 @@ void LPUART1_IRQHandler(void){
 	   	case 'd': //move right
 	   		LPUART_EscPrint(RIGHT);
 		   	break;
+	   	case 'f': //flag
+		      flag();
+		   	break;
+	   	case 'u': //unflag
+		      unflag();
+		   	break;
 	   default:
 	      while( !(LPUART1->ISR & USART_ISR_TXE) ); // wait for empty TX buffer
 	      LPUART1->TDR = charRecv;  // echo char to terminal
