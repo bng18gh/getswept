@@ -23,7 +23,12 @@
 
 void game_start(void);
 void board_init(void);
+void flag(void);
+void unflag(void);
+void update_mines(void);
 
+
+#define TOTAL_MINES (10)
 #define ROWS (9)
 #define COLUMNS (9)
 #endif /* INC_MINESWEEPER_H_ */
