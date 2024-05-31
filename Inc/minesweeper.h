@@ -1,0 +1,29 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file           : minesweeper.h
+  * @brief          : Header for minesweeper.c file.
+  *                   This file contains the common defines of the application.
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+
+#ifndef INC_MINESWEEPER_H_
+#define INC_MINESWEEPER_H_
+
+void game_start(void);
+
+
+#define ROWS (9)
+#define COLUMNS (9)
+#endif /* INC_MINESWEEPER_H_ */
