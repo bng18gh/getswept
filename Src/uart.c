@@ -43,19 +43,10 @@ void uart_init(void);
 void LPUART_PrintChar(char letter);
 void LPUART_Print(const char* string);
 void LPUART_EscPrint(const char *esc_string);
-uint16_t find_minimum(uint16_t *array);
-uint16_t find_maximum(uint16_t *array);
-uint16_t find_avg(uint16_t *array);
-void print_counts(uint16_t counts);
-void print_volts(uint16_t volts);
-void update_terminal (uint16_t *array);
 
-int max_counts;
-int min_counts;
-int avg_counts;
-int min_voltage;
-int max_voltage;
-int avg_voltage;
+
+int row_location;
+int col_location;
 
 /* -----------------------------------------------------------------------------
  * function : uart_init( )
@@ -111,24 +102,42 @@ void LPUART1_IRQHandler(void){
       switch ( charRecv ) {
 	   	case 'x': //game set and reset
 	   		board_init();//create the initial board screen
+	   		row_location = 1;
+	   		col_location = 1;
 		   	break;
+	   	//movement commands, limited to the 9x9 box
 	   	case 'w': //move up
-	   		LPUART_EscPrint(UP);
+	   		if(row_location != 1){
+		   		LPUART_EscPrint(UP);
+	   			row_location--;
+	   		}
 		   	break;
 	   	case 'a': //move left
-	   		LPUART_EscPrint(LEFT);
+	   		if (col_location != 1){
+	   			LPUART_EscPrint(LEFT);
+	   			col_location--;
+	   		}
 		   	break;
 	   	case 's': //move down
-	   		LPUART_EscPrint(DOWN);
+	   		if(row_location != 9){
+		   		LPUART_EscPrint(DOWN);
+	   			row_location++;
+	   		}
 		   	break;
 	   	case 'd': //move right
-	   		LPUART_EscPrint(RIGHT);
+	   		if (col_location != 9){
+	   			LPUART_EscPrint(RIGHT);
+	   			col_location++;
+	   		}
 		   	break;
 	   	case 'f': //flag
 		      flag();
 		   	break;
 	   	case 'u': //unflag
 		      unflag();
+		   	break;
+	   	case 'm': //mine
+		      mine(row_location, col_location);
 		   	break;
 	   default:
 	      while( !(LPUART1->ISR & USART_ISR_TXE) ); // wait for empty TX buffer
@@ -183,7 +192,6 @@ void LPUART_EscPrint(const char *esc_string){
 	LPUART1->TDR = 0x1b; //ESC
 	LPUART_Print(esc_string);
 	delay_us(100);
-
 }
 
 
