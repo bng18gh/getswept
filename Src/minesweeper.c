@@ -43,9 +43,9 @@ void board_init(void);
 void flag(void);
 void unflag(void);
 void update_mines(void);
+void mine(int row, int col);
 
-int row_location;
-int col_location;
+
 int mines_left = 10;
 static char game [9][9] = {{'*', '2', '1', '1', ' ', '1', '1', '2', '1'},
 						  	  	   {'1', '2', '*', '1', ' ', '1', '*', '2', '*'},
@@ -101,11 +101,17 @@ void board_init(){
 		LPUART_EscPrint(DOWN);
 		LPUART_EscPrint("[9D");
 	}
+	LPUART_EscPrint("[1;40H");
+	LPUART_Print("CONTROLS");
+	LPUART_EscPrint("[2;40H");
+	LPUART_Print("Movement: WASD");
+	LPUART_EscPrint("[3;40H");
+	LPUART_Print("Flag: F   Unflag: U");
+	LPUART_EscPrint("[4;40H");
+	LPUART_Print("Mine: M");
 	set_cursor_position (2, 8);
 	write_string("000000000");
 	LPUART_EscPrint(CURSOR_START); //(start of the board point)
-	row_location = 1;
-	col_location = 1;
 
 }
 
@@ -121,6 +127,7 @@ void board_init(){
 void flag(){
 	if(mines_left != 0){//only if there's mines you can actually flag
    	LPUART_PrintChar('>');
+   	LPUART_EscPrint(LEFT);
    	mines_left--; //decrease mine count
    	update_mines();
    }
@@ -138,6 +145,7 @@ void flag(){
 void unflag(){
 	if(mines_left != 10){//only if there's flags to remove
    	LPUART_PrintChar('▓');
+   	LPUART_EscPrint(LEFT);
    	mines_left++; //decrease mine count
    	update_mines();
    }
@@ -159,4 +167,18 @@ void update_mines(){
 	write_char(tenmines + '0');
 	mines_to_print = mines_to_print - (10 * tenmines);
 	write_char(mines_to_print + '0');
+}
+
+/* -----------------------------------------------------------------------------
+ * function : mine( )
+ * INs      : current row and column position of the cursor
+ * OUTs     : none
+ * action   : mine on the screen
+ * authors  : Brandon Ng (bn) - bng18@calpoly.edu
+ * version  : 0.1
+ * date     : 240531
+ * -------------------------------------------------------------------------- */
+void mine(int row, int col){
+	LPUART_PrintChar(game[row - 1][col - 1]);
+	LPUART_EscPrint(LEFT);
 }
