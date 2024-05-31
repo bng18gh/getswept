@@ -26,6 +26,7 @@ void board_init(void);
 void flag(void);
 void unflag(void);
 void update_mines(void);
+void mine(int row, int col);
 
 
 #define TOTAL_MINES (10)
