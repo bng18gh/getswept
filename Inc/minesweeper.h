@@ -22,7 +22,7 @@
 #define INC_MINESWEEPER_H_
 
 void game_start(void);
-
+void board_init(void);
 
 #define ROWS (9)
 #define COLUMNS (9)
