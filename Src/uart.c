@@ -112,6 +112,18 @@ void LPUART1_IRQHandler(void){
 	   	case 'x': //game set and reset
 	   		board_init();//create the initial board screen
 		   	break;
+	   	case 'w': //move up
+	   		LPUART_EscPrint(UP);
+		   	break;
+	   	case 'a': //move left
+	   		LPUART_EscPrint(LEFT);
+		   	break;
+	   	case 's': //move down
+	   		LPUART_EscPrint(DOWN);
+		   	break;
+	   	case 'd': //move right
+	   		LPUART_EscPrint(RIGHT);
+		   	break;
 	   default:
 	      while( !(LPUART1->ISR & USART_ISR_TXE) ); // wait for empty TX buffer
 	      LPUART1->TDR = charRecv;  // echo char to terminal
