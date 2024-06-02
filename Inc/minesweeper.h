@@ -27,6 +27,9 @@ void flag(void);
 void unflag(void);
 void update_mines(void);
 void mine(int row, int col);
+void loss_screen(int row, int col);
+void expose_mines(char character);
+void score_points(int row, int col);
 
 
 #define TOTAL_MINES (10)
