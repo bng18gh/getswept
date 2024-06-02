@@ -30,6 +30,8 @@ void mine(int row, int col);
 void loss_screen(int row, int col);
 void expose_mines(char character);
 void score_points(int row, int col);
+void update_score(int row, int col, int winning);
+void final_score(void);
 
 
 #define TOTAL_MINES (10)
