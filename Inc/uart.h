@@ -36,5 +36,8 @@ void LPUART_EscPrint(const char *esc_string);
 #define DOWN ("[1B")
 #define LEFT ("[1D")
 #define RIGHT ("[1C")
+#define BLACK ("[30m")
+#define RED ("[31m")
+#define GREEN ("[32m")
 
 #endif /* INC_UART_H_ */
