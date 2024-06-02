@@ -36,6 +36,7 @@
 #include "delay.h"
 #include "uart.h"
 #include "lcd.h"
+#include "timer.h"
 
 //Function Prototypes
 void game_start(void);
@@ -47,10 +48,15 @@ void mine(int row, int col);
 void loss_screen(int row, int col);
 void expose_mines(char character);
 void score_points(int row, int col);
+void update_score(int row, int col, int winning);
+void final_score(void);
 
 
 int mines_left;
 int spaces_exposed; //temporary
+uint32_t score;
+uint32_t starting_time;
+uint32_t ending_time;
 static char game [9][9] = {{'*', '2', '1', '1', ' ', '1', '1', '2', '1'},
 						  	  	   {'1', '2', '*', '1', ' ', '1', '*', '2', '*'},
 									{' ', '1', '1', '1', ' ', '1', '1', '2', '1'},
@@ -114,6 +120,8 @@ void board_init(){
 	LPUART_Print("Flag: F   Unflag: U");
 	LPUART_EscPrint("[4;40H");
 	LPUART_Print("Mine: M");
+	set_cursor_position(1,2);
+	write_string(")");
 	set_cursor_position(1,15);
 	write_string("10");
 	set_cursor_position (2, 8);
@@ -121,6 +129,8 @@ void board_init(){
 	LPUART_EscPrint(CURSOR_START); //(start of the board point)
 	mines_left = 10;
 	spaces_exposed = 0;
+	score = 0;
+	starting_time = TIM2->CNT; //record time
 
 }
 
@@ -270,8 +280,10 @@ void score_points(int row, int col){
 	LPUART_PrintChar(game[row - 1][col - 1]);
 	LPUART_EscPrint(LEFT);
 	spaces_exposed++;
+	update_score(row, col, 0);
 	//if you've mined all the correct things, win
 	if (spaces_exposed == 71){//9x9 grid - 10 mines
+		ending_time = TIM2->CNT; //record time
 		LPUART_EscPrint(CURSOR_START);
 		LPUART_EscPrint(GREEN);
 		expose_mines('>');
@@ -281,6 +293,73 @@ void score_points(int row, int col){
 		LPUART_EscPrint(BLINK);
 		LPUART_Print("Press x to make a new game");
 		LPUART_EscPrint(NONE);
+		final_score();
 	}
 }
+
+/* -----------------------------------------------------------------------------
+ * function : update_score( )
+ * INs      : current row and column position of the cursor, winning marker
+ * OUTs     : none
+ * action   : score update on LCD
+ * authors  : Brandon Ng (bn) - bng18@calpoly.edu
+ * version  : 0.1
+ * date     : 240602
+ * -------------------------------------------------------------------------- */
+void update_score(int row, int col, int winning){
+	if (winning == 0){ //we don't want the tile affected to work if winning
+		int score_marker;
+		if (game[row - 1][col - 1] == ' '){
+			score_marker = 0;
+		}
+		else{
+			score_marker = game[row - 1][col - 1] - '0';
+		}
+		score += ((score_marker*100) + 100); //values mining riskier spaces
+	}
+	set_cursor_position(2,9);
+	uint32_t print_score = score;
+	int tenmil = print_score/10000000;
+	write_char(tenmil + '0');
+	print_score -= (tenmil*10000000);
+	int mil = print_score/1000000;
+	write_char(mil + '0');
+	print_score -= (mil*1000000);
+	int hunthou = print_score/100000;
+	write_char(hunthou + '0');
+	print_score -= (hunthou*100000);
+	int tenthou = print_score/10000;
+	write_char(tenthou + '0');
+	print_score -= (tenthou*10000);
+	int thou = print_score/1000;
+	write_char(thou + '0');
+	print_score -= (thou*1000);
+	int hundreds = print_score/100;
+	write_char(hundreds + '0');
+	print_score -= (hundreds*100);
+	int tens = print_score/10;
+	write_char(tens + '0');
+	print_score -= (tens*10);
+	write_char(print_score + '0');
+
+}
+
+/* -----------------------------------------------------------------------------
+ * function : final_score( )
+ * INs      : current row and column position of the cursor
+ * OUTs     : none
+ * action   : score update, only when game is won
+ * authors  : Brandon Ng (bn) - bng18@calpoly.edu
+ * version  : 0.1
+ * date     : 240602
+ * -------------------------------------------------------------------------- */
+void final_score(){
+	score += 500000; //bonus score for winning
+	uint32_t time_score = (10000000 - (ending_time - starting_time))%10000000;
+	score += time_score;
+	update_score(0, 0, 1);
+
+}
+
+
 
