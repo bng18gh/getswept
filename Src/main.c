@@ -5,7 +5,7 @@
  ******************************************************************************
  * @file           : main.c
  * @brief          : control hub to run minesweeper
- * project         : EE321 CP Spring 2024
+ * project         : EE329 CP Spring 2024
  * authors         : Brandon Ng bng18@calpoly.edu
  * 						Ryan Rayos rrayos@calpoly.edu
  * date            : 240607
@@ -28,10 +28,12 @@
  *******************************************************************************
  * REVISION HISTORY
  * 0.1 240529 bn created
- *
+ * 0.2 240530 bn added game setup, LCD, board print
+ * 0.2 240531 bn added flag and unflag
+ * 0.3 240602 bn added winning, losing, scoring, timer
  *******************************************************************************
  * TODO
- *
+ * make the navigation array
  ******************************************************************************
  */
 /* Includes ------------------------------------------------------------------*/
@@ -40,7 +42,6 @@
 #include "lcd.h"
 #include "delay.h"
 #include "uart.h"
-#include "timer.h"
 
 
 /* Function Prototypes -------------------------------------------------------*/
@@ -60,10 +61,6 @@ int main(void) {
 	game_start();
 
 	while (1) {
-
-
-
-
 	}
 
 }
@@ -85,7 +82,6 @@ void GPIO_Init(){
 	GPIOB->MODER &= ~(GPIO_MODER_MODE2);
 	GPIOB->MODER |= (GPIO_MODER_MODE2_0);
 }
-
 
 
 void SystemClock_Config(void)
