@@ -40,8 +40,7 @@
 //Function Prototypes
 void game_start(void);
 void board_init(void);
-void flag(void);
-void unflag(void);
+void flag(int row, int col);
 void update_mines(void);
 void mine(int row, int col);
 void loss_screen(int row, int col);
@@ -59,6 +58,7 @@ int seconds;
 uint32_t score;
 uint32_t starting_time;
 uint32_t ending_time;
+static int status [9][9];
 static char game [9][9] = {{'*', '2', '1', '1', ' ', '1', '1', '2', '1'},
 						  	  	   {'1', '2', '*', '1', ' ', '1', '*', '2', '*'},
 									{' ', '1', '1', '1', ' ', '1', '1', '2', '1'},
@@ -109,9 +109,11 @@ void board_init(){
 	LPUART_EscPrint(CLEAR);
 	LPUART_EscPrint(CURSOR_START); //(start of the board point)
 	LPUART_EscPrint(BLACK);
+	//fill the status bar and terminal
 	for (int i = 0; i < ROWS; i++){
 		for (int j = 0; j < COLUMNS; j++){
 			LPUART_PrintChar('▓'); //odd question mark (MAC), or black box (PC)
+			status[i][j] = 0;
 		}
 		LPUART_EscPrint(DOWN);
 		LPUART_EscPrint("[9D");
@@ -121,7 +123,7 @@ void board_init(){
 	LPUART_EscPrint("[2;40H");
 	LPUART_Print("Movement: WASD");
 	LPUART_EscPrint("[3;40H");
-	LPUART_Print("Flag: F   Unflag: U");
+	LPUART_Print("Flag: F");
 	LPUART_EscPrint("[4;40H");
 	LPUART_Print("Mine: M");
 	LPUART_EscPrint("[20;1H");
@@ -143,38 +145,32 @@ void board_init(){
 
 /* -----------------------------------------------------------------------------
  * function : flag( )
- * INs      : none
+ * INs      : current row and column position of the cursor
  * OUTs     : none
  * action   : flag a mine on the board
  * authors  : Brandon Ng (bn) - bng18@calpoly.edu
  * version  : 0.1
  * date     : 240531
  * -------------------------------------------------------------------------- */
-void flag(){
-	if(mines_left != 0){//only if there's mines you can actually flag
-   	LPUART_PrintChar('>');
-   	LPUART_EscPrint(LEFT);
-   	mines_left--; //decrease mine count
-   	update_mines();
+void flag(int row, int col){
+	if(status[row - 1][col - 1] == 0){//unmarked, can be flagged
+		if(mines_left != 0){//only if there's mines you can actually flag
+	   	LPUART_PrintChar('>');
+	   	LPUART_EscPrint(LEFT);
+	   	mines_left--; //decrease mine count
+	   	status[row - 1][col - 1] = 2; //change status to flagged
+	   	update_mines();
+		}
    }
-}
-
-/* -----------------------------------------------------------------------------
- * function : unflag( )
- * INs      : none
- * OUTs     : none
- * action   : remove a flag
- * authors  : Brandon Ng (bn) - bng18@calpoly.edu
- * version  : 0.1
- * date     : 240531
- * -------------------------------------------------------------------------- */
-void unflag(){
-	if(mines_left != 10){//only if there's flags to remove
-   	LPUART_PrintChar('▓');
-   	LPUART_EscPrint(LEFT);
-   	mines_left++; //decrease mine count
-   	update_mines();
-   }
+	else if (status[row - 1][col - 1] == 2){//flagged, so unflag the space
+		if(mines_left != 10){//only if there's flags to remove
+	   	LPUART_PrintChar('▓');
+	   	LPUART_EscPrint(LEFT);
+	   	mines_left++; //increase mine count
+	   	status[row - 1][col - 1] = 0; //change status to unflagged
+	   	update_mines();
+	   }
+	}
 }
 
 /* -----------------------------------------------------------------------------
@@ -284,25 +280,28 @@ void expose_mines(char character){
  * date     : 240602
  * -------------------------------------------------------------------------- */
 void score_points(int row, int col){
-	//expose how many mines are around
-	LPUART_PrintChar(game[row - 1][col - 1]);
-	LPUART_EscPrint(LEFT);
-	spaces_exposed++;
-	update_score(row, col, 0);
-	//if you've mined all the correct things, win
-	if (spaces_exposed == 71){//9x9 grid - 10 mines
-		timer_on = 0;
-		ending_time = TIM2->CNT; //record time
-		LPUART_EscPrint(CURSOR_START);
-		LPUART_EscPrint(GREEN);
-		expose_mines('>');
-		LPUART_EscPrint("[12;40H");
-		LPUART_Print("Yay! You won the game.");
-		LPUART_EscPrint("[13;40H");
-		LPUART_EscPrint(BLINK);
-		LPUART_Print("Press x to make a new game");
-		LPUART_EscPrint(NONE);
-		final_score();
+	if (status [row - 1][col - 1] == 0){//blank space, can be mined
+		//expose how many mines are around
+		LPUART_PrintChar(game[row - 1][col - 1]);
+		LPUART_EscPrint(LEFT);
+		spaces_exposed++;
+		status [row - 1][col - 1] = 1; //1 is mined
+		update_score(row, col, 0);
+		//if you've mined all the correct things, win
+		if (spaces_exposed == 71){//9x9 grid - 10 mines
+			timer_on = 0;
+			ending_time = TIM2->CNT; //record time
+			LPUART_EscPrint(CURSOR_START);
+			LPUART_EscPrint(GREEN);
+			expose_mines('>');
+			LPUART_EscPrint("[12;40H");
+			LPUART_Print("Yay! You won the game.");
+			LPUART_EscPrint("[13;40H");
+			LPUART_EscPrint(BLINK);
+			LPUART_Print("Press x to make a new game");
+			LPUART_EscPrint(NONE);
+			final_score();
+		}
 	}
 }
 
