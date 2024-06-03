@@ -40,6 +40,7 @@
 #include "lcd.h"
 #include "delay.h"
 #include "uart.h"
+#include "timer.h"
 
 
 /* Function Prototypes -------------------------------------------------------*/
