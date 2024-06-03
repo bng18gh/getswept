@@ -53,6 +53,7 @@ int main(void) {
 	SystemClock_Config();
 	uart_init();
 	LCD_init();
+	timer_init();
 	GPIO_Init();
 
 	game_start();
