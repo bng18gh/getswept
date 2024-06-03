@@ -21,10 +21,17 @@
 #ifndef INC_MINESWEEPER_H_
 #define INC_MINESWEEPER_H_
 
+
+#define TOTAL_MINES (10)
+#define ROWS (9)
+#define COLUMNS (9)
+
+void initialize_grid(char grid[ROWS][COLUMNS]);
+void place_mines (char grid[ROWS][COLUMNS], int nummines);
+void count_mines(char grid[ROWS][COLUMNS]);
 void game_start(void);
 void board_init(void);
-void flag(void);
-void unflag(void);
+void flag(int row, int col);
 void update_mines(void);
 void mine(int row, int col);
 void loss_screen(int row, int col);
@@ -35,7 +42,4 @@ void final_score(void);
 void timer_init(void);
 
 
-#define TOTAL_MINES (10)
-#define ROWS (9)
-#define COLUMNS (9)
 #endif /* INC_MINESWEEPER_H_ */
