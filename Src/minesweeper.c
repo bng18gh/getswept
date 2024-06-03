@@ -36,7 +36,6 @@
 #include "delay.h"
 #include "uart.h"
 #include "lcd.h"
-#include "timer.h"
 
 //Function Prototypes
 void game_start(void);
@@ -50,10 +49,13 @@ void expose_mines(char character);
 void score_points(int row, int col);
 void update_score(int row, int col, int winning);
 void final_score(void);
+void timer_init(void);
 
 
 int mines_left;
 int spaces_exposed; //temporary
+int timer_on;
+int seconds;
 uint32_t score;
 uint32_t starting_time;
 uint32_t ending_time;
@@ -89,7 +91,7 @@ void game_start(){
 	set_cursor_position(1,1);
 	write_string(":) Mines Left:--");
 	set_cursor_position(2,1);
-	write_string("Score: ---------");
+	write_string("Time: ---       ");
 }
 
 /* -----------------------------------------------------------------------------
@@ -102,6 +104,8 @@ void game_start(){
  * date     : 240530
  * -------------------------------------------------------------------------- */
 void board_init(){
+	timer_on = 0;
+	seconds = 0;
 	LPUART_EscPrint(CLEAR);
 	LPUART_EscPrint(CURSOR_START); //(start of the board point)
 	LPUART_EscPrint(BLACK);
@@ -120,16 +124,19 @@ void board_init(){
 	LPUART_Print("Flag: F   Unflag: U");
 	LPUART_EscPrint("[4;40H");
 	LPUART_Print("Mine: M");
+	LPUART_EscPrint("[20;1H");
+	LPUART_Print("Score: ");
 	set_cursor_position(1,2);
 	write_string(")");
 	set_cursor_position(1,15);
 	write_string("10");
-	set_cursor_position (2, 8);
-	write_string("000000000");
+	LPUART_EscPrint ("[12;1H");
+	write_string("Score: 00000000");
 	LPUART_EscPrint(CURSOR_START); //(start of the board point)
 	mines_left = 10;
 	spaces_exposed = 0;
 	score = 0;
+	timer_on = 1;
 	starting_time = TIM2->CNT; //record time
 
 }
@@ -216,6 +223,7 @@ void mine(int row, int col){
  * date     : 240602
  * -------------------------------------------------------------------------- */
 void loss_screen(int row, int col){
+	timer_on = 0;
 	LPUART_EscPrint(CURSOR_START);
 	expose_mines('*');
 	//change the color for the actual mine you hit
@@ -283,6 +291,7 @@ void score_points(int row, int col){
 	update_score(row, col, 0);
 	//if you've mined all the correct things, win
 	if (spaces_exposed == 71){//9x9 grid - 10 mines
+		timer_on = 0;
 		ending_time = TIM2->CNT; //record time
 		LPUART_EscPrint(CURSOR_START);
 		LPUART_EscPrint(GREEN);
@@ -317,30 +326,30 @@ void update_score(int row, int col, int winning){
 		}
 		score += ((score_marker*100) + 100); //values mining riskier spaces
 	}
-	set_cursor_position(2,9);
+	LPUART_EscPrint("[20;8H");
 	uint32_t print_score = score;
 	int tenmil = print_score/10000000;
-	write_char(tenmil + '0');
+	LPUART_PrintChar(tenmil + '0');
 	print_score -= (tenmil*10000000);
 	int mil = print_score/1000000;
-	write_char(mil + '0');
+	LPUART_PrintChar(mil + '0');
 	print_score -= (mil*1000000);
 	int hunthou = print_score/100000;
-	write_char(hunthou + '0');
+	LPUART_PrintChar(hunthou + '0');
 	print_score -= (hunthou*100000);
 	int tenthou = print_score/10000;
-	write_char(tenthou + '0');
+	LPUART_PrintChar(tenthou + '0');
 	print_score -= (tenthou*10000);
 	int thou = print_score/1000;
-	write_char(thou + '0');
+	LPUART_PrintChar(thou + '0');
 	print_score -= (thou*1000);
 	int hundreds = print_score/100;
-	write_char(hundreds + '0');
+	LPUART_PrintChar(hundreds + '0');
 	print_score -= (hundreds*100);
 	int tens = print_score/10;
-	write_char(tens + '0');
+	LPUART_PrintChar(tens + '0');
 	print_score -= (tens*10);
-	write_char(print_score + '0');
+	LPUART_PrintChar(print_score + '0');
 
 }
 
@@ -362,4 +371,43 @@ void final_score(){
 }
 
 
+/* -----------------------------------------------------------------------------
+ * function : timer_init( )
+ * INs      : none
+ * OUTs     : none
+ * action   : set up the TIM2 timer
+ * authors  : Brandon Ng (bn) - bng18@calpoly.edu
+ * version  : 0.1
+ * date     : 240602
+ * -------------------------------------------------------------------------- */
+void timer_init(){
+	RCC->APB1ENR1 |= (RCC_APB1ENR1_TIM2EN);         // enable clock for TIM2
+	TIM2->DIER |= (TIM_DIER_CC1IE | TIM_DIER_UIE);  // enable event gen, rcv CCR1
+	TIM2->ARR = 0xFFFFFFFF - 1;                     // ARR = T = counts @4MHz
+	TIM2->CCR1 = 4000000 - 1;                           // ticks for duty cycle
+	TIM2->SR &= ~(TIM_SR_CC1IF | TIM_SR_UIF);       // clr IRQ flag in status reg
+	NVIC->ISER[0] |= (1 << (TIM2_IRQn & 0x1F));     // set NVIC interrupt: 0x1F
+	__enable_irq();               // global IRQ enable
+	TIM2->CR1 |= TIM_CR1_CEN;                       // start TIM2 CR1
+}
 
+void TIM2_IRQHandler(void) {
+	if (TIM2->SR & TIM_SR_CC1IF) {      // triggered by CCR1 event ...
+		TIM2->CCR1 += 4000000;				//every second
+		if(timer_on == 1){
+			seconds++;
+			set_cursor_position(2, 7);
+			int time_seconds = seconds;
+			int hundreds = time_seconds/100;
+			write_char(hundreds + '0');
+			time_seconds -= (hundreds * 100);
+			int tens = time_seconds/10;
+			write_char(tens + '0');
+			time_seconds -= (tens * 10);
+			write_char(time_seconds + '0');
+			write_string("       ");
+		}
+		TIM2->SR &= ~(TIM_SR_CC1IF);     // manage the flag
+	}
+
+}
