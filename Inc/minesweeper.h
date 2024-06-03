@@ -32,6 +32,7 @@ void expose_mines(char character);
 void score_points(int row, int col);
 void update_score(int row, int col, int winning);
 void final_score(void);
+void timer_init(void);
 
 
 #define TOTAL_MINES (10)
