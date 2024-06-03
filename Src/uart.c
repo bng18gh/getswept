@@ -132,10 +132,7 @@ void LPUART1_IRQHandler(void){
 	   		}
 		   	break;
 	   	case 'f': //flag
-		      flag();
-		   	break;
-	   	case 'u': //unflag
-		      unflag();
+		      flag(row_location, col_location);
 		   	break;
 	   	case 'm': //mine
 		      mine(row_location, col_location);
