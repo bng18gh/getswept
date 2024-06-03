@@ -100,6 +100,7 @@ void LPUART1_IRQHandler(void){
 	if (LPUART1->ISR & USART_ISR_RXNE) {
       charRecv = LPUART1->RDR;
       switch ( charRecv ) {
+	   	break;
 	   	case 'x': //game set and reset
 	   		board_init();//create the initial board screen
 	   		row_location = 1;
@@ -138,6 +139,13 @@ void LPUART1_IRQHandler(void){
 		   	break;
 	   	case 'm': //mine
 		      mine(row_location, col_location);
+		      LPUART_EscPrint(CURSOR_START);
+		      for (int i = 0; i < col_location - 1; i++){
+		      	LPUART_EscPrint(RIGHT);
+		      }
+		      for (int i = 0; i < row_location - 1; i++){
+		      	LPUART_EscPrint(DOWN);
+		      }
 		   	break;
 	   default:
 	      while( !(LPUART1->ISR & USART_ISR_TXE) ); // wait for empty TX buffer
