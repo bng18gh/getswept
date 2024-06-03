@@ -31,6 +31,8 @@
  * 0.2 240530 bn added game setup, LCD, board print
  * 0.2 240531 bn added flag and unflag
  * 0.3 240602 bn added winning, losing, scoring, timer
+ * 0.4 240603 bn switched timer and score, added error prevention
+ * 0.5 240603 rr added randomizer
  *******************************************************************************
  * TODO
  * make the navigation array
@@ -56,7 +58,6 @@ int main(void) {
 	uart_init();
 	LCD_init();
 	timer_init();
-	GPIO_Init();
 
 	game_start();
 
@@ -64,24 +65,8 @@ int main(void) {
 	}
 
 }
-/* -----------------------------------------------------------------------------
- * function : GPIO_Init( )
- * INs      : none
- * OUTs     : none
- * action   : set up the GPIO for this lab
- * authors  : Brandon Ng (bn) - bng18@calpoly.edu
- * version  : 0.1
- * date     : 240527
- * -------------------------------------------------------------------------- */
-void GPIO_Init(){
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;  // GPIOC clock init
-	GPIOC->MODER &= ~(GPIO_MODER_MODE13); // button init
-	GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD13_1);
-	GPIOC->PUPDR |= (GPIO_PUPDR_PUPD13_1);
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;  // GPIOB clock init
-	GPIOB->MODER &= ~(GPIO_MODER_MODE2);
-	GPIOB->MODER |= (GPIO_MODER_MODE2_0);
-}
+
+
 
 
 void SystemClock_Config(void)
