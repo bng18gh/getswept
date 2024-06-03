@@ -36,8 +36,13 @@
 #include "delay.h"
 #include "uart.h"
 #include "lcd.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 //Function Prototypes
+void initialize_grid(char grid[ROWS][COLUMNS]);
+void place_mines (char grid[ROWS][COLUMNS], int nummines);
+void count_mines(char grid[ROWS][COLUMNS]);
 void game_start(void);
 void board_init(void);
 void flag(int row, int col);
@@ -52,23 +57,93 @@ void timer_init(void);
 
 
 int mines_left;
-int spaces_exposed; //temporary
+int spaces_exposed;
 int timer_on;
 int seconds;
 uint32_t score;
 uint32_t starting_time;
 uint32_t ending_time;
 static int status [9][9];
-static char game [9][9] = {{'*', '2', '1', '1', ' ', '1', '1', '2', '1'},
-						  	  	   {'1', '2', '*', '1', ' ', '1', '*', '2', '*'},
-									{' ', '1', '1', '1', ' ', '1', '1', '2', '1'},
-									{' ', ' ', ' ', ' ', ' ', ' ', '1', '1', '1'},
-									{' ', ' ', ' ', ' ', '1', '1', '2', '*', '1'},
-									{' ', ' ', ' ', ' ', '1', '*', '3', '3', '2'},
-									{' ', ' ', ' ', ' ', '1', '2', '*', '2', '*'},
-									{' ', ' ', '1', '1', '1', '1', '1', '3', '2'},
-									{' ', ' ', '1', '*', '1', ' ', ' ', '1', '*'},
-								  };
+static char game [9][9];
+
+
+/* -----------------------------------------------------------------------------
+ * function : initialize_grid()
+ * INs      : none
+ * OUTs     : none
+ * action   : fill grid with "0"s
+ * authors  : Ryan Rayos (rr) - rrayos@calpoly.edu
+ * version  : 0.1
+ * date     : 240603
+ * -------------------------------------------------------------------------- */
+void initialize_grid(char grid[ROWS][COLUMNS]){
+	for (int i=0; i<ROWS; ++i){
+		for (int j = 0; j < COLUMNS; ++j){
+			grid[i][j] = '0';
+		}
+	}
+}
+
+/* -----------------------------------------------------------------------------
+ * function : place_mines()
+ * INs      : game grid, number of mines to place
+ * OUTs     : none
+ * action   : game entry screen
+ * authors  : Ryan Rayos (rr) - rrayos@calpoly.edu
+ * version  : 0.1
+ * date     : 240603
+ * -------------------------------------------------------------------------- */
+void place_mines (char grid[ROWS][COLUMNS], int nummines){
+	int minesplaced = 0;
+	while (minesplaced < nummines){
+		int row = rand() % ROWS;
+		int columns = rand() % COLUMNS;
+
+		if (grid[row][columns] != '*'){
+			grid[row][columns] ='*';
+			minesplaced++;
+		}
+	}
+}
+
+/* -----------------------------------------------------------------------------
+ * function : count_mines( )
+ * INs      : game grid
+ * OUTs     : none
+ * action   : game entry screen
+ * authors  : Ryan Rayos (rr) - rrayos@calpoly.edu
+ * version  : 0.1
+ * date     : 240603
+ * -------------------------------------------------------------------------- */
+void count_mines(char grid[ROWS][COLUMNS]){
+	int directions[8][2] = {
+			{-1, -1}, {-1, 0}, {-1, 1},
+			{ 0, -1},          { 0, 1},
+			{ 1, -1}, { 1, 0}, { 1, 1}};
+
+	for (int row = 0; row<ROWS; ++row){
+		for (int col = 0; col<COLUMNS; ++col){
+			if (grid[row][col] == '*'){
+					continue;
+			}
+			int minestotal = 0;
+
+			for (int i = 0; i <8; ++i){
+				int newRow = row + directions[i][0];
+				int newCol = col + directions[i][1];
+
+				if (newRow >= 0 && newRow < ROWS &&
+					 newCol >= 0 && newCol < COLUMNS){
+					 if (grid[newRow][newCol] == '*') {
+					 minestotal++;
+				}
+				}
+			}
+			grid[row][col] = minestotal + '0';
+		}
+	}
+
+}
 
 /* -----------------------------------------------------------------------------
  * function : game_start( )
@@ -140,6 +215,9 @@ void board_init(){
 	score = 0;
 	timer_on = 1;
 	starting_time = TIM2->CNT; //record time
+	initialize_grid(game);
+	place_mines(game, 10);
+	count_mines(game);
 
 }
 
@@ -317,7 +395,7 @@ void score_points(int row, int col){
 void update_score(int row, int col, int winning){
 	if (winning == 0){ //we don't want the tile affected to work if winning
 		int score_marker;
-		if (game[row - 1][col - 1] == ' '){
+		if (game[row - 1][col - 1] == '0'){
 			score_marker = 0;
 		}
 		else{
