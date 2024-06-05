@@ -57,7 +57,6 @@ void timer_init(void);
 
 
 int mines_left;
-int spaces_exposed;
 int timer_on;
 int seconds;
 uint32_t score;
@@ -69,7 +68,7 @@ static char game [9][9];
 
 /* -----------------------------------------------------------------------------
  * function : initialize_grid()
- * INs      : none
+ * INs      : game grid
  * OUTs     : none
  * action   : fill grid with "0"s
  * authors  : Ryan Rayos (rr) - rrayos@calpoly.edu
@@ -79,7 +78,7 @@ static char game [9][9];
 void initialize_grid(char grid[ROWS][COLUMNS]){
 	for (int i=0; i<ROWS; ++i){
 		for (int j = 0; j < COLUMNS; ++j){
-			grid[i][j] = '0';
+			grid[i][j] = '0'; //initialize an empty board
 		}
 	}
 }
@@ -88,7 +87,7 @@ void initialize_grid(char grid[ROWS][COLUMNS]){
  * function : place_mines()
  * INs      : game grid, number of mines to place
  * OUTs     : none
- * action   : game entry screen
+ * action   : place mines inside of game board randomly
  * authors  : Ryan Rayos (rr) - rrayos@calpoly.edu
  * version  : 0.1
  * date     : 240603
@@ -99,7 +98,7 @@ void place_mines (char grid[ROWS][COLUMNS], int nummines){
 		int row = rand() % ROWS;
 		int columns = rand() % COLUMNS;
 
-		if (grid[row][columns] != '*'){
+		if (grid[row][columns] != '*'){//prevent overlapping mines
 			grid[row][columns] ='*';
 			minesplaced++;
 		}
@@ -110,7 +109,7 @@ void place_mines (char grid[ROWS][COLUMNS], int nummines){
  * function : count_mines( )
  * INs      : game grid
  * OUTs     : none
- * action   : game entry screen
+ * action   : count the mines around a given space
  * authors  : Ryan Rayos (rr) - rrayos@calpoly.edu
  * version  : 0.1
  * date     : 240603
@@ -123,7 +122,7 @@ void count_mines(char grid[ROWS][COLUMNS]){
 
 	for (int row = 0; row<ROWS; ++row){
 		for (int col = 0; col<COLUMNS; ++col){
-			if (grid[row][col] == '*'){
+			if (grid[row][col] == '*'){//don't count the mine spaces
 					continue;
 			}
 			int minestotal = 0;
@@ -139,7 +138,7 @@ void count_mines(char grid[ROWS][COLUMNS]){
 				}
 				}
 			}
-			grid[row][col] = minestotal + '0';
+			grid[row][col] = minestotal + '0';//load the value in the game board
 		}
 	}
 
@@ -163,6 +162,7 @@ void game_start(){
 	LPUART_EscPrint("[7;24H");
 	LPUART_Print("Press the x key to start");
 	LPUART_EscPrint(NONE); //stop blinking
+	//initial LCD screen
 	set_cursor_position(1,1);
 	write_string(":) Mines Left:--");
 	set_cursor_position(2,1);
@@ -179,8 +179,8 @@ void game_start(){
  * date     : 240530
  * -------------------------------------------------------------------------- */
 void board_init(){
-	timer_on = 0;
-	seconds = 0;
+	timer_on = 0; //stops timer counting up
+	seconds = 0; //time starts at 0
 	LPUART_EscPrint(CLEAR);
 	LPUART_EscPrint(CURSOR_START); //(start of the board point)
 	LPUART_EscPrint(BLACK);
@@ -193,6 +193,7 @@ void board_init(){
 		LPUART_EscPrint(DOWN);
 		LPUART_EscPrint("[9D");
 	}
+	//helpful controls text
 	LPUART_EscPrint("[1;40H");
 	LPUART_Print("CONTROLS");
 	LPUART_EscPrint("[2;40H");
@@ -210,11 +211,12 @@ void board_init(){
 	LPUART_EscPrint ("[12;1H");
 	write_string("Score: 00000000");
 	LPUART_EscPrint(CURSOR_START); //(start of the board point)
+	//game start variable statuses
 	mines_left = 10;
-	spaces_exposed = 0;
 	score = 0;
 	timer_on = 1;
 	starting_time = TIM2->CNT; //record time
+	//create the actual game board
 	initialize_grid(game);
 	place_mines(game, 10);
 	count_mines(game);
@@ -297,7 +299,7 @@ void mine(int row, int col){
  * date     : 240602
  * -------------------------------------------------------------------------- */
 void loss_screen(int row, int col){
-	timer_on = 0;
+	timer_on = 0; //stop counting time
 	LPUART_EscPrint(CURSOR_START);
 	expose_mines('*');
 	//change the color for the actual mine you hit
@@ -336,7 +338,7 @@ void loss_screen(int row, int col){
 void expose_mines(char character){
 	for (int i = 0; i < ROWS; i++){
 		for (int j = 0; j < COLUMNS; j++){
-			if (game[i][j] =='*'){
+			if (game[i][j] =='*'){//mine on the game board
 				LPUART_PrintChar(character);
 			}
 			else{
@@ -360,14 +362,27 @@ void expose_mines(char character){
 void score_points(int row, int col){
 	if (status [row - 1][col - 1] == 0){//blank space, can be mined
 		//expose how many mines are around
-		LPUART_PrintChar(game[row - 1][col - 1]);
+		if (game[row - 1][col - 1] == '0'){
+			LPUART_PrintChar(' ');
+		}
+		else{
+			LPUART_PrintChar(game[row - 1][col - 1]);
+		}
+
 		LPUART_EscPrint(LEFT);
-		spaces_exposed++;
 		status [row - 1][col - 1] = 1; //1 is mined
 		update_score(row, col, 0);
+		int spaces_exposed = 0;
+		for (int i = 0; i < ROWS; i++){
+			for (int j = 0; j < COLUMNS; j++){
+				if (status [i][j] == 1){ //meaning an exposed space
+					spaces_exposed++;
+				}
+			}
+		}
 		//if you've mined all the correct things, win
 		if (spaces_exposed == 71){//9x9 grid - 10 mines
-			timer_on = 0;
+			timer_on = 0; //stop counting time
 			ending_time = TIM2->CNT; //record time
 			LPUART_EscPrint(CURSOR_START);
 			LPUART_EscPrint(GREEN);
@@ -394,13 +409,7 @@ void score_points(int row, int col){
  * -------------------------------------------------------------------------- */
 void update_score(int row, int col, int winning){
 	if (winning == 0){ //we don't want the tile affected to work if winning
-		int score_marker;
-		if (game[row - 1][col - 1] == '0'){
-			score_marker = 0;
-		}
-		else{
-			score_marker = game[row - 1][col - 1] - '0';
-		}
+		int score_marker = game[row - 1][col - 1] - '0';
 		score += ((score_marker*100) + 100); //values mining riskier spaces
 	}
 	LPUART_EscPrint("[20;8H");
@@ -441,6 +450,7 @@ void update_score(int row, int col, int winning){
  * -------------------------------------------------------------------------- */
 void final_score(){
 	score += 500000; //bonus score for winning
+	//time score for how fast you can play the game
 	uint32_t time_score = (10000000 - (ending_time - starting_time))%10000000;
 	score += time_score;
 	update_score(0, 0, 1);
@@ -461,10 +471,10 @@ void timer_init(){
 	RCC->APB1ENR1 |= (RCC_APB1ENR1_TIM2EN);         // enable clock for TIM2
 	TIM2->DIER |= (TIM_DIER_CC1IE | TIM_DIER_UIE);  // enable event gen, rcv CCR1
 	TIM2->ARR = 0xFFFFFFFF - 1;                     // ARR = T = counts @4MHz
-	TIM2->CCR1 = 4000000 - 1;                           // ticks for duty cycle
+	TIM2->CCR1 = 4000000 - 1;                       // ticks for duty cycle
 	TIM2->SR &= ~(TIM_SR_CC1IF | TIM_SR_UIF);       // clr IRQ flag in status reg
 	NVIC->ISER[0] |= (1 << (TIM2_IRQn & 0x1F));     // set NVIC interrupt: 0x1F
-	__enable_irq();               // global IRQ enable
+	__enable_irq();               						// global IRQ enable
 	TIM2->CR1 |= TIM_CR1_CEN;                       // start TIM2 CR1
 }
 
