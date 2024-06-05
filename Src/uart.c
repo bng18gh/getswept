@@ -199,4 +199,20 @@ void LPUART_EscPrint(const char *esc_string){
 	delay_us(100);
 }
 
+void Print_String(int row, int column, const char text[]) {
+	char escape[3000];
+	if ((90 > row) | (row > 0)) {
+		if ((90 > column) | (column > 0)) {
+			snprintf(escape, sizeof(escape), "\x1B[%d;%dH", row, column);
+			LPUART_EscPrint("[H");
+			while (!(LPUART1->ISR & USART_ISR_TXE)) { // wait for empty xmit buffer
+				;
+			}
+			strcat(escape, text);
+			//sprintf(escape, "\x1B[%d;%dH", row, column);
+			LPUART_EscPrint(escape);
+
+		}
+	}
+}
 
